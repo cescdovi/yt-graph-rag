@@ -7,7 +7,6 @@ import json
 from config.common_settings import settings
 
 # Configure logging
-# logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -29,9 +28,9 @@ def get_urls_from_playlist(
         ):
     """Extracts video URLs from a YouTube playlist and saves metadata to JSON files."""
     
-    logger.info(f"Getting URLs from playlist {playlist_id}")
+    logger.debug("Creating YouTube client...")
     youtube = get_youtube_client()
-    logger.info("Youtube client created successfully")
+    logger.debug("Youtube client created successfully")
 
     videos = []
     next_page_token = None
