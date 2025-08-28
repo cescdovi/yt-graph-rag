@@ -15,11 +15,15 @@ class Settings(BaseSettings):
     CHUNK_LENGTH_MS: int = Field(..., ge=1000, le=3600000)  
     OVERLAP_MS: int = Field(..., ge=0, le=600000)
 
+    #models 
+    TRANSCRIPTION_MODEL: str
+
     # load env variables from .env file
     model_config = SettingsConfigDict(env_file=".env")
+    
    
     
-    @field_validator("OPENAI_API_KEY", "YOUTUBE_API_KEY", "PLAYLIST_ID", "DATA_DIR")
+    @field_validator("OPENAI_API_KEY", "YOUTUBE_API_KEY", "PLAYLIST_ID", "TRANSCRIPTION_MODEL", "DATA_DIR")
     def validate_openai_api_key(cls, v, field):
         if not v.strip():
             raise ValueError(f"{field.name} cannot be empty")
