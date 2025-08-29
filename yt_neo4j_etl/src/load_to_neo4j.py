@@ -1,73 +1,107 @@
-import logging
 from pathlib import Path
-
+import logging
 from config.common_settings import settings
 from config.setup_logging import setup_logging
 
 from langchain_community.document_loaders.parsers.audio import OpenAIWhisperParser
+from langchain_openai import ChatOpenAI
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnableLambda
 
 from yt_neo4j_etl.src.extract_urls_from_playlist import get_urls_from_playlist
 from yt_neo4j_etl.src.chains.video_chunking import YoutubeChunkingChain
 from yt_neo4j_etl.src.chains.transcription import WhisperTranscriptionChain
+from yt_neo4j_etl.src.chains.unifiy_transcriptions import UnifyTranscriptsChain
+from yt_neo4j_etl.src.chains.ortography_correction import OrtographyCorrectionChain
+from yt_neo4j_etl.src.chains.correference_resolution import CorreferenceResolutionChain
+from yt_neo4j_etl.src.chains.translation import TranslationChain
 
 from yt_neo4j_etl.src.prompts.prompt_transcription import chat_prompt_transcription
+from yt_neo4j_etl.src.prompts.prompt_unify_transcriptions import chat_prompt_unifier
+from yt_neo4j_etl.src.prompts.prompt_ortography_correction import chat_prompt_corrector
+from yt_neo4j_etl.src.prompts.prompt_correference_resolution import chat_prompt_correference_resolution
+from yt_neo4j_etl.src.prompts.prompt_translation import chat_prompt_detect_language, chat_prompt_translation
 
 def main():
-    setup_logging() 
-    logger = logging.getLogger(__name__)
+    setup_logging()
+    log = logging.getLogger(__name__)
+    log.info("NEO4J ETL: Loading data from YouTube playlists to Neo4j...")
 
-    logger.info("Starting ETL load to Neo4j")
-    logger.info("-" * 60)
+    # -- LLM y helpers
+    llm = ChatOpenAI(model=settings.LLM_MODEL, api_key=settings.OPENAI_API_KEY, max_retries=settings.MAX_RETRIES)
+    to_str = StrOutputParser()
+    whisper = OpenAIWhisperParser(api_key=settings.OPENAI_API_KEY, model=settings.TRANSCRIPTION_MODEL, prompt=chat_prompt_transcription)
 
-    logger.info(" Starting URL extraction from YouTube playlist")
+    # -- Chains atómicas
+    chunk_chain   = YoutubeChunkingChain(chunk_length_ms=settings.CHUNK_LENGTH_MS, overlap_ms=settings.OVERLAP_MS, base_dir=Path(settings.DATA_DIR))
+    transcription_chain   = WhisperTranscriptionChain(parser=whisper)
+    unify_chain     = UnifyTranscriptsChain(unifier_chain=(chat_prompt_unifier | llm))
+    correction_chain   = OrtographyCorrectionChain(corrective_chain=(chat_prompt_corrector | llm))
+    corref_chain     = CorreferenceResolutionChain(correference_resolution_chain=(chat_prompt_correference_resolution | llm))
+    translation_chain = TranslationChain(detect_chain=(chat_prompt_detect_language | llm),
+                                 translate_chain=(chat_prompt_translation | llm))
+
     urls = get_urls_from_playlist(settings.PLAYLIST_ID)
-    logger.info(" URL extraction completed")
-    logger.info(f" Extracted {len(urls)} URLs")
+    urls = urls[:1]  # para pruebas rápidas
 
-    logger.info("-" * 60)
-    logger.info(f"URLS: {urls}")
+    #chunking
+    inputs_chunk_chain = [
+        {
+            "_video_id": vid
+        } 
+        for vid in urls
+    ]
+    results_chunk_chain = chunk_chain.batch(inputs_chunk_chain)
 
-    logger.info("Starting video chunking")
-    
-    urls = urls[:1]
-    chunk_chain = YoutubeChunkingChain(
-        chunk_length_ms = settings.CHUNK_LENGTH_MS,
-        overlap_ms = settings.OVERLAP_MS,
-        base_dir = Path(settings.DATA_DIR),
-    )
-    results_chunk_chain = [] # list of dicts
-    for i in range(len(urls)):
-        logger.info(f"Video URL: {urls[i]}")
-        intermediate_chunking = chunk_chain.invoke({"_video_id": urls[i]})
-        results_chunk_chain.append(intermediate_chunking)
-    logger.info(f"Video chunking completed for {len(urls)} videos")
-    
-    logger.info("-" * 60)
+    #transcription
+    inputs_transcription_chain = [
+        {
+            "_video_id": item["_video_id"],
+            "chunk_paths": [chunk_path for chunk_path in item["chunk_paths"]]
+        } 
+        for item in results_chunk_chain
+    ]
+    results_transcription_chain = transcription_chain.batch(inputs_transcription_chain)
 
+    #unify
+    inputs_unify_chain = [
+        {
+            "_video_id": item["_video_id"],
+            "transcripts": [transcript for transcript in item["transcripts"]]
+        } 
+        for item in results_transcription_chain
+    ]
+    results_unify_chain = unify_chain.batch(inputs_unify_chain)
 
-    logger.info("Starting Whisper transcription...")
-    parser = OpenAIWhisperParser(
-        api_key = settings.OPENAI_API_KEY,
-        model   = settings.TRANSCRIPTION_MODEL,
-        prompt  = chat_prompt_transcription,
-    )
-    
-    transcription_chain = WhisperTranscriptionChain(parser=parser)
+    #correction
+    inputs_correction_chain = [
+        {
+            "_video_id": item["_video_id"],
+            "unified_transcript": item["unified_transcript"]
+        } 
+        for item in results_unify_chain
+    ]
+    results_correction_chain = correction_chain.batch(inputs_correction_chain)
 
-    results_transcription_chain = []
+    #Correference
+    inputs_corref_chain = [
+        {
+            "_video_id": item["_video_id"],
+            "corrected_text": item["corrected_text"]
+        } 
+        for item in results_correction_chain
+    ]
+    results_corref_chain = corref_chain.batch(inputs_corref_chain)
 
-    for i in range(len(results_chunk_chain)):
-        _video_id   = results_chunk_chain[i]["_video_id"]
-        chunk_paths = results_chunk_chain[i]["chunk_paths"]
-
-        logger.info("Transcribing video_id=%s with %d chunks...", _video_id, len(chunk_paths))
-        intermediate_transcription = transcription_chain.invoke({
-            "_video_id": _video_id,
-            "chunk_paths": [chunk_path for chunk_path in chunk_paths]
-        })
-        results_transcription_chain.append(intermediate_transcription)
-    logger.info("All transcriptions completed.")
-
+    #translation
+    inputs_translation_chain = [
+        {
+            "_video_id": item["_video_id"],
+            "correference_resolution_text": item["correference_resolution_text"]
+        } 
+        for item in results_corref_chain
+    ]
+    results_translation_chain = translation_chain.batch(inputs_translation_chain)
 
 if __name__ == "__main__":
     main()
