@@ -6,6 +6,7 @@ from langchain_core.document_loaders import Blob
 from langchain.chains.base import Chain
 from langchain_community.document_loaders.parsers.audio import OpenAIWhisperParser
 
+# Set up a logger for the chain
 logger = logging.getLogger(__name__)
 
 class WhisperTranscriptionChain(Chain):
@@ -50,13 +51,19 @@ class WhisperTranscriptionChain(Chain):
                  parser: OpenAIWhisperParser,
                  **kwargs
                  ):
-        
         super().__init__(**kwargs)
         self.parser = parser
+        logger.info("WhisperTranscriptionChain initialized.")
 
     def _call(self, inputs: Dict[str, List[str]]) -> Dict[str, List[str]]:
         _video_id = inputs["_video_id"]
-        chunk_paths: List[str] = inputs["chunk_paths"]
+        chunk_paths: List[str] = inputs.get("chunk_paths", [])
+
+        logger.info(
+            "Starting Whisper transcription for video_id=%s. Number of chunks: %d",
+            _video_id,
+            len(chunk_paths)
+        )
         
         transcripts: List[str] = []
 
@@ -65,7 +72,7 @@ class WhisperTranscriptionChain(Chain):
                 p = Path(path)
                 if not p.exists():
                     logger.error("Chunk not found (%s) for video_id=%s", path, _video_id)
-                    raise FileNotFoundError(f"Chunk no encontrado: {path}")
+                    raise FileNotFoundError(f"Chunk not found: {path}")
 
                 logger.debug("Reading bytes from chunk %d: %s", idx, path)
                 raw = p.read_bytes()                
@@ -108,5 +115,4 @@ class WhisperTranscriptionChain(Chain):
         return {
             "_video_id": _video_id,
             "transcripts": transcripts
-            }
-        
+        }

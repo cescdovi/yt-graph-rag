@@ -17,6 +17,9 @@ class Settings(BaseSettings):
 
     #models 
     TRANSCRIPTION_MODEL: str
+    LLM_MODEL: str
+
+    MAX_RETRIES:int = Field(..., ge=0)
 
     # load env variables from .env file
     model_config = SettingsConfigDict(env_file=".env")
