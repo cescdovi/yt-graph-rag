@@ -4,6 +4,13 @@ class Settings(BaseSettings):
     #api keys
     OPENAI_API_KEY: str
     YOUTUBE_API_KEY: str
+    TAVILY_API_KEY: str
+    
+    #NEO4J
+    NEO4J_URI: str
+    NEO4J_USER: str
+    NEO4J_PASSWORD: str
+    NEO4J_DATABASE: str
 
     #youtube playlist id
     PLAYLIST_ID: str
@@ -26,7 +33,17 @@ class Settings(BaseSettings):
     
    
     
-    @field_validator("OPENAI_API_KEY", "YOUTUBE_API_KEY", "PLAYLIST_ID", "TRANSCRIPTION_MODEL", "DATA_DIR")
+    @field_validator(
+            "OPENAI_API_KEY", 
+            "YOUTUBE_API_KEY",
+            "TAVILY_API_KEY", 
+            "NEO4J_URI",
+            "NEO4J_USER",
+            "NEO4J_PASSWORD",
+            "NEO4J_DATABASE",
+            "PLAYLIST_ID", 
+            "TRANSCRIPTION_MODEL", 
+            "DATA_DIR")
     def validate_openai_api_key(cls, v, field):
         if not v.strip():
             raise ValueError(f"{field.name} cannot be empty")
