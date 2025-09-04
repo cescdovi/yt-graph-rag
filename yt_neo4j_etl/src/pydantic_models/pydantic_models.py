@@ -1,7 +1,7 @@
-from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
 from typing import List, Literal, Optional
 from uuid import uuid4
+from typing import Union
 
 class EntidadBase(BaseModel):
     """Información genérica de todas las entidades"""
@@ -10,25 +10,25 @@ class EntidadBase(BaseModel):
 
 class Persona(EntidadBase):
     """Información de una persona"""
-    id: str = Field(default_factory=lambda: str(uuid4()), description="Identificador único de la persona")
+    id: str = Field(default_factory=lambda: str(uuid4()), description="Identificador único de la persona usando la función uuid4 del módulo uuid")
     tipo: Literal['Persona']
     profesion: str = Field(..., description="Profesión u oficio de la persona")
 
 class Empresa(EntidadBase):
     """Información de una empresa u organización"""
-    id: str = Field(default_factory=lambda: str(uuid4()), description="Identificador único de la empresa")
+    id: str = Field(default_factory=lambda: str(uuid4()), description="Identificador único de la empresa usando la función uuid4 del módulo uuid")
     tipo: Literal['Empresa']
     industria: Optional[str] = Field(None, description="Sector o industria de la empresa")
 
 class CentroEducativo(EntidadBase):
     """Información de un centro educativo"""
-    id: str = Field(default_factory=lambda: str(uuid4()), description="Identificador único del centro educativo")
+    id: str = Field(default_factory=lambda: str(uuid4()), description="Identificador único del centro educativo usando la función uuid4 del módulo uuid")
     tipo: Literal['CentroEducativo']
     localizacion: Optional[str] = Field(None, description="Ubicación o ciudad del centro educativo")
 
 class Movimiento(EntidadBase):
     """Información de un movimiento o corriente de diseño/práctica"""
-    id: str = Field(default_factory=lambda: str(uuid4()), description="Identificador único del movimiento")
+    id: str = Field(default_factory=lambda: str(uuid4()), description="Identificador único del movimiento usando la función uuid4 del módulo uuid")
     tipo: Literal['Movimiento']
     categoria: Optional[str] = Field(
         None,
@@ -42,7 +42,7 @@ class Producto(EntidadBase):
     - tipo: indica que se trata de un producto.
     - subtipo: especifica si es un material, una técnica, un tipo genérico u otro.
     """
-    id: str = Field(default_factory=lambda: str(uuid4()), description="Identificador único del producto")
+    id: str = Field(default_factory=lambda: str(uuid4()), description="Identificador único del producto usando la función uuid4 del módulo uuid")
     tipo: Literal['Producto'] = Field(
         'Producto',
         description="Constante que identifica la entidad como un producto."
@@ -62,9 +62,9 @@ class Entidades(BaseModel):
 
 ################################################
 class Relacion(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid4()), description="Identificador único de la relación")
-    entidad_origen: str = Field(..., description="Nombre que representa a la entidad de origen")
-    entidad_destino: str = Field(..., description="Nombre que representa a la entidad de destino")
+    id: str = Field(default_factory=lambda: str(uuid4()), description="Identificador único de la relación usando la función uuid4 del módulo uuid")
+    entidad_origen: Union[Persona, Empresa, CentroEducativo, Movimiento, Producto]
+    entidad_destino: Union[Persona, Empresa, CentroEducativo, Movimiento, Producto]
     descripcion_relacion: str = Field(..., description="explicación de por qué considera que la entidad origen y la entidad destino están relacionadas")
     fuerza_relacion: float = Field(..., description="puntuación numérica que indica la fuerza de la relación entre la entidad origen y la entidad destino")
 

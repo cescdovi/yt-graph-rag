@@ -7,7 +7,8 @@ class Settings(BaseSettings):
     TAVILY_API_KEY: str
     
     #NEO4J
-    NEO4J_URI: str
+    NEO4J_URI_BOLT: str
+    NEO4J_URI_HTTP: str
     NEO4J_USER: str
     NEO4J_PASSWORD: str
     NEO4J_DATABASE: str
@@ -37,7 +38,8 @@ class Settings(BaseSettings):
             "OPENAI_API_KEY", 
             "YOUTUBE_API_KEY",
             "TAVILY_API_KEY", 
-            "NEO4J_URI",
+            "NEO4J_URI_BOLT",
+            "NEO4J_URI_HTTP",
             "NEO4J_USER",
             "NEO4J_PASSWORD",
             "NEO4J_DATABASE",
