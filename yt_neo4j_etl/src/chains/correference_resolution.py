@@ -4,7 +4,6 @@ from pathlib import Path
 from pydantic import PrivateAttr, ConfigDict
 from langchain.chains.base import Chain
 from langchain_core.runnables import RunnableSequence
-import os
 import json
 
 # Set up a logger for the chain
