@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     #models 
     TRANSCRIPTION_MODEL: str
     LLM_MODEL: str
+    EMBEDDINGS_MODEL: str
 
     MAX_RETRIES:int = Field(..., ge=0)
 
@@ -44,7 +45,9 @@ class Settings(BaseSettings):
             "NEO4J_PASSWORD",
             "NEO4J_DATABASE",
             "PLAYLIST_ID", 
-            "TRANSCRIPTION_MODEL", 
+            "TRANSCRIPTION_MODEL",
+            "LLM_MODEL", 
+            "EMBEDDINGS_MODEL",
             "DATA_DIR")
     def validate_openai_api_key(cls, v, field):
         if not v.strip():

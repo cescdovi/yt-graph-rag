@@ -95,7 +95,7 @@ def etl_load_to_neo4j(inputs: dict):
         graph.query(
             """
             MERGE (c:centroeducativo {id: $id})
-            SET c.tipo = $tipo, c.nombre = $nombre, c.descripcion = $descripcion, c.industria = $localizacion
+            SET c.tipo = $tipo, c.nombre = $nombre, c.descripcion = $descripcion, c.localizacion = $localizacion
             """,
             params = {
                 "id": centro.id,
@@ -108,18 +108,18 @@ def etl_load_to_neo4j(inputs: dict):
 
         )
     logger.info("Loading MOVIMIENTOS to Neo4j...")
-    for centro in obj_validated.entidades.centros_educativos:
+    for movimiento in obj_validated.entidades.movimientos:
         graph.query(
             """
-            MERGE (c:centroeducativo {id: $id})
-            SET c.tipo = $tipo, c.nombre = $nombre, c.descripcion = $descripcion, c.industria = $localizacion
+            MERGE (m:movimiento {id: $id})
+            SET m.tipo = $tipo, m.nombre = $nombre, m.descripcion = $descripcion, m.categoria = $categoria
             """,
             params = {
-                "id": centro.id,
-                "tipo": centro.tipo,
-                "nombre": centro.nombre,
-                "descripcion": centro.descripcion,
-                "localizacion": centro.localizacion,
+                "id": movimiento.id,
+                "tipo": movimiento.tipo,
+                "nombre": movimiento.nombre,
+                "descripcion": movimiento.descripcion,
+                "categoria": movimiento.categoria,
     
             }
 
@@ -161,3 +161,6 @@ def etl_load_to_neo4j(inputs: dict):
                 "id_relacion": relacion.id,
             }
         )
+
+# graph = connect_to_neo4j()
+# graph.query("MATCH (n) DETACH DELETE n")
