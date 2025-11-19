@@ -1,6 +1,6 @@
 from langchain.prompts import ChatPromptTemplate
 
-chat_prompt_structured_outputs = ChatPromptTemplate.from_messages(
+CHAT_PROMPT_STRUCTURED_OUTPUTS_SIMPLE = ChatPromptTemplate.from_messages(
     [
         (
             "system",

@@ -4,7 +4,7 @@ from langchain.prompts import (
     HumanMessagePromptTemplate
 )
 
-chat_prompt_transcription = ChatPromptTemplate.from_messages([
+CHAT_PROMPT_TRANSCRIPTION_SIMPLE = ChatPromptTemplate.from_messages([
     SystemMessagePromptTemplate.from_template(
         "Eres un LLM experto en transcribir fragmentos de audio con solapamiento."
     ),

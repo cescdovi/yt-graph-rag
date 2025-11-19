@@ -4,7 +4,7 @@ from langchain.prompts import (
     HumanMessagePromptTemplate
 )
 
-chat_prompt_corrector = ChatPromptTemplate.from_messages([
+CHAT_PROMPT_CORRECTOR_SIMPLE = ChatPromptTemplate.from_messages([
     SystemMessagePromptTemplate.from_template(
         """
         Eres un asistente experto en patrimonio valenciano con sólidos conocimiento históricos y culturales sobre la región y en corrección de transcripciones. 
