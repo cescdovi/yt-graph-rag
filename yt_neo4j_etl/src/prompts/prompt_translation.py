@@ -4,7 +4,7 @@ from langchain.prompts import (
     HumanMessagePromptTemplate
 )
 
-chat_prompt_detect_language = ChatPromptTemplate.from_messages([
+CHAT_PROMPT_DETECT_LANGUAGE_SIMPLE = ChatPromptTemplate.from_messages([
     SystemMessagePromptTemplate.from_template(
         """
         Eres un clasificador de idioma. Responde excluisivamente sólo con el idioma principal del siguiente texto: valenciano, castellano u otro.
@@ -18,7 +18,7 @@ chat_prompt_detect_language = ChatPromptTemplate.from_messages([
     )
 ])
 
-chat_prompt_translation = ChatPromptTemplate.from_messages([
+CHAT_PROMPT_TRANSLATION_SIMPLE = ChatPromptTemplate.from_messages([
     SystemMessagePromptTemplate.from_template(
         """
         Eres un traductor experto que convierte valenciano al castellano manteniendo el estilo y la longitud del texto.

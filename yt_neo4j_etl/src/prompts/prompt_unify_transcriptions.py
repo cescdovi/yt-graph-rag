@@ -3,7 +3,7 @@ from langchain.prompts import (
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate
 )
-chat_prompt_unifier = ChatPromptTemplate.from_messages([
+CHAT_PROMPT_UNIFIER_SIMPLE = ChatPromptTemplate.from_messages([
     SystemMessagePromptTemplate.from_template(
         """
         Eres un asistente experto en unificar fragmentos de transcripción con solapes.

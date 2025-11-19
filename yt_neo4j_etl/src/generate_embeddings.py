@@ -190,6 +190,3 @@ def prepare_graph_embeddings_index():
 
     logger.info("Creating a vector index over embeddings...")
     create_index(graph)
-
-
-prepare_graph_embeddings_index()

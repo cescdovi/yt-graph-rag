@@ -4,7 +4,7 @@ from langchain.prompts import (
     HumanMessagePromptTemplate
 )
 
-chat_prompt_correference_resolution = ChatPromptTemplate.from_messages([
+CHAT_PROMPT_CORREFERENCE_RESOLUTION_SIMPLE = ChatPromptTemplate.from_messages([
     SystemMessagePromptTemplate.from_template(
         """
         Eres un asistente experto en resolución de correferencias para transcripciones de vídeo. 

@@ -16,13 +16,14 @@ from yt_neo4j_etl.src.chains.correference_resolution import CorreferenceResoluti
 from yt_neo4j_etl.src.chains.translation import TranslationChain
 from yt_neo4j_etl.src.chains.get_structured_output import GetStructuredOutputChain
 from yt_neo4j_etl.src.etl_load import etl_load_to_neo4j
+from yt_neo4j_etl.src.generate_embeddings import prepare_graph_embeddings_index
 
-from yt_neo4j_etl.src.prompts.prompt_transcription import chat_prompt_transcription
-from yt_neo4j_etl.src.prompts.prompt_unify_transcriptions import chat_prompt_unifier
-from yt_neo4j_etl.src.prompts.prompt_ortography_correction import chat_prompt_corrector
-from yt_neo4j_etl.src.prompts.prompt_correference_resolution import chat_prompt_correference_resolution
-from yt_neo4j_etl.src.prompts.prompt_translation import chat_prompt_detect_language, chat_prompt_translation
-from yt_neo4j_etl.src.prompts.prompt_get_structured_output import chat_prompt_structured_outputs
+from yt_neo4j_etl.src.prompts.prompt_transcription import CHAT_PROMPT_TRANSCRIPTION_SIMPLE
+from yt_neo4j_etl.src.prompts.prompt_unify_transcriptions import CHAT_PROMPT_UNIFIER_SIMPLE
+from yt_neo4j_etl.src.prompts.prompt_ortography_correction import CHAT_PROMPT_CORRECTOR_SIMPLE
+from yt_neo4j_etl.src.prompts.prompt_correference_resolution import CHAT_PROMPT_CORREFERENCE_RESOLUTION_SIMPLE
+from yt_neo4j_etl.src.prompts.prompt_translation import CHAT_PROMPT_DETECT_LANGUAGE_SIMPLE, CHAT_PROMPT_TRANSLATION_SIMPLE
+from yt_neo4j_etl.src.prompts.prompt_get_structured_output import CHAT_PROMPT_STRUCTURED_OUTPUTS_SIMPLE
 
 from yt_neo4j_etl.src.pydantic_models.pydantic_models import OutputSchema
 
@@ -35,19 +36,19 @@ def main():
     llm = ChatOpenAI(model=settings.LLM_MODEL, api_key=settings.OPENAI_API_KEY, max_retries=settings.MAX_RETRIES)
 
     structured_output_parser = PydanticOutputParser(pydantic_object=OutputSchema)
-    whisper = OpenAIWhisperParser(api_key=settings.OPENAI_API_KEY, model=settings.TRANSCRIPTION_MODEL, prompt=chat_prompt_transcription)
+    whisper = OpenAIWhisperParser(api_key=settings.OPENAI_API_KEY, model=settings.TRANSCRIPTION_MODEL, prompt=CHAT_PROMPT_TRANSCRIPTION_SIMPLE)
 
     # -- Chains atómicas
     chunk_chain   = YoutubeChunkingChain(chunk_length_ms=settings.CHUNK_LENGTH_MS, overlap_ms=settings.OVERLAP_MS, base_dir=Path(settings.DATA_DIR))
     transcription_chain   = WhisperTranscriptionChain(parser=whisper)
-    unify_chain     = UnifyTranscriptsChain(unifier_chain=(chat_prompt_unifier | llm))
-    correction_chain   = OrtographyCorrectionChain(corrective_chain=(chat_prompt_corrector | llm))
-    corref_chain     = CorreferenceResolutionChain(correference_resolution_chain=(chat_prompt_correference_resolution | llm))
-    translation_chain = TranslationChain(detect_chain=(chat_prompt_detect_language | llm),
-                                 translate_chain=(chat_prompt_translation | llm))
+    unify_chain     = UnifyTranscriptsChain(unifier_chain=(CHAT_PROMPT_UNIFIER_SIMPLE | llm))
+    correction_chain   = OrtographyCorrectionChain(corrective_chain=(CHAT_PROMPT_CORRECTOR_SIMPLE | llm))
+    corref_chain     = CorreferenceResolutionChain(correference_resolution_chain=(CHAT_PROMPT_CORREFERENCE_RESOLUTION_SIMPLE | llm))
+    translation_chain = TranslationChain(detect_chain=(CHAT_PROMPT_DETECT_LANGUAGE_SIMPLE | llm),
+                                 translate_chain=(CHAT_PROMPT_TRANSLATION_SIMPLE | llm))
 
     get_structured_output_chain = GetStructuredOutputChain(
-        structured_output_chain=(chat_prompt_structured_outputs.partial(format_instructions=structured_output_parser.get_format_instructions()) | llm | structured_output_parser))
+        structured_output_chain=(CHAT_PROMPT_STRUCTURED_OUTPUTS_SIMPLE.partial(format_instructions=structured_output_parser.get_format_instructions()) | llm | structured_output_parser))
 
     urls = get_urls_from_playlist(settings.PLAYLIST_ID)
     urls = urls[:1]  # para pruebas rápidas
@@ -124,6 +125,8 @@ def main():
     # -- Neo4j
     for item in results_structured_outputs_chain:
         etl_load_to_neo4j(item)
+    
+    prepare_graph_embeddings_index()
 
 if __name__ == "__main__":
     main()

@@ -27,8 +27,12 @@ class Settings(BaseSettings):
     TRANSCRIPTION_MODEL: str
     LLM_MODEL: str
     EMBEDDINGS_MODEL: str
+    EVALUATION_MODEL: str
 
     MAX_RETRIES:int = Field(..., ge=0)
+
+    #number of retrieval nodes for RAG
+    RETRIEVED_NODES: int = Field(..., ge=1)
 
     # load env variables from .env file
     model_config = SettingsConfigDict(env_file=".env")
@@ -47,6 +51,7 @@ class Settings(BaseSettings):
             "PLAYLIST_ID", 
             "TRANSCRIPTION_MODEL",
             "LLM_MODEL", 
+            "EVALUATION_MODEL",
             "EMBEDDINGS_MODEL",
             "DATA_DIR")
     def validate_openai_api_key(cls, v, field):
